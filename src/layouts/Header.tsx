@@ -8,13 +8,9 @@ import { cn } from "@utils/helpers";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { DistributorTransferAccountModal } from "@/cloud/distributor/DistributorTransferAccountModal";
-import { MSPTenantsSwitcher } from "@/cloud/msp/MSPTenantsSwitcher";
-import { MSPTransferAccountModal } from "@/cloud/msp/MSPTransferAccountModal";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import HelpAndSupportButton from "@components/ui/HelpAndSupportButton";
 
 export const headerHeight = 65;
 
@@ -27,59 +23,51 @@ export default function NavbarWithDropdown() {
   return (
     <>
       <div
-        className={"fixed z-50 w-full"}
-        style={{
-          height: headerHeight + bannerHeight,
-        }}
+        className="fixed z-50 w-full"
+        style={{ height: headerHeight + bannerHeight }}
       >
         <AnnouncementBanner />
-        <div
+        <header
           className={cn(
-            "bg-white px-2 py-3 dark:border-gray-700 dark:bg-nb-gray backdrop-blur-lg sm:px-6",
-            "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
-            "flex justify-between items-center transition-all",
+            "mx-2 mt-2 flex items-center justify-between rounded-2xl border px-3 py-2.5 sm:mx-4 sm:px-4",
+            "border-gray-200/80 bg-white/90 shadow-sm backdrop-blur-xl",
+            "dark:border-white/10 dark:bg-zinc-950/80 dark:shadow-[0_12px_36px_rgba(0,0,0,0.22)]",
           )}
         >
-          <div className={"flex items-center gap-4 md:hidden"}>
+          <div className="flex items-center gap-2 md:hidden">
             <Button
+              aria-label="Open navigation"
               className={cn(
-                "!px-3 md:hidden",
-                isRestricted && "opacity-0 pointer-events-none",
+                "!h-10 !w-10 !px-0",
+                isRestricted && "pointer-events-none opacity-0",
               )}
-              variant={"default-outline"}
+              variant="default-outline"
               onClick={toggleMobileNav}
             >
-              <div>
-                <MenuIcon size={20} className={"relative"} />
-              </div>
+              <MenuIcon size={19} />
             </Button>
           </div>
-          <div className={"flex gap-4 mr-auto"}>
+
+          <div className="mr-auto flex items-center gap-2">
             <button
+              aria-label="Open GoreeCloud Network peers"
               onClick={() => router.push("/peers")}
-              className={
-                "cursor-pointer hover:opacity-70 transition-all mr-auto"
-              }
+              className="rounded-xl p-1.5 transition hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 dark:hover:bg-white/5"
             >
               <NetBirdLogo />
             </button>
             <ToggleCollapsableNavigationButton />
           </div>
 
-          <div className="flex md:order-2 gap-5 items-center">
-            <MSPTransferAccountModal />
-            <DistributorTransferAccountModal />
-            <MSPTenantsSwitcher />
-            <HelpAndSupportButton />
+          <div className="flex items-center gap-2 md:order-2">
+            <div className="hidden rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-700 sm:block dark:text-emerald-300">
+              Self-hosted
+            </div>
             <UserDropdown />
           </div>
-        </div>
+        </header>
       </div>
-      <div
-        style={{
-          height: headerHeight + bannerHeight,
-        }}
-      ></div>
+      <div style={{ height: headerHeight + bannerHeight }} />
     </>
   );
 }
@@ -88,22 +76,24 @@ const ToggleCollapsableNavigationButton = () => {
   const { isRestricted } = usePermissions();
   const { toggleNavigation, isNavigationCollapsed } = useApplicationContext();
 
+  if (isRestricted) return null;
+
   return (
-    !isRestricted && (
-      <button
-        onClick={toggleNavigation}
-        data-navbar-colappse-toggle
-        className={cn(
-          "h-10 w-10 hover:text-white flex items-center justify-center text-nb-gray-300 transition-all ml-2",
-          "hidden md:block",
-        )}
-      >
-        {isNavigationCollapsed ? (
-          <PanelLeftOpenIcon size={16} />
-        ) : (
-          <PanelLeftCloseIcon size={16} />
-        )}
-      </button>
-    )
+    <button
+      aria-label={isNavigationCollapsed ? "Expand navigation" : "Collapse navigation"}
+      onClick={toggleNavigation}
+      data-navbar-colappse-toggle
+      className={cn(
+        "ml-1 hidden h-10 w-10 items-center justify-center rounded-xl text-gray-500 transition",
+        "hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/60 md:flex",
+        "dark:text-zinc-400 dark:hover:bg-white/5 dark:hover:text-white",
+      )}
+    >
+      {isNavigationCollapsed ? (
+        <PanelLeftOpenIcon size={17} />
+      ) : (
+        <PanelLeftCloseIcon size={17} />
+      )}
+    </button>
   );
 };
