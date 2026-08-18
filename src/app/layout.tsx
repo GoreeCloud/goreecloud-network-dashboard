@@ -3,8 +3,9 @@ import type { Metadata } from "next";
 import AppLayout from "@/layouts/AppLayout";
 
 export const metadata: Metadata = {
-  title: `${globalMetaTitle}`,
+  title: globalMetaTitle,
   description:
-    "NetBird combines a configuration-free peer-to-peer private network and a centralized access control system in a single open-source platform",
+    "GoreeCloud Network provides self-hosted private networking, device connectivity, and access control for approved GoreeCloud users, devices, and services.",
 };
+
 export default AppLayout;
