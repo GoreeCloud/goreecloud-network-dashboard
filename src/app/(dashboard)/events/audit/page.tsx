@@ -1,12 +1,11 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon, LogsIcon } from "lucide-react";
+import { LogsIcon } from "lucide-react";
 import React from "react";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -41,15 +40,9 @@ export default function Activity() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Audit Events</h1>
         <Paragraph>
-          Audit configuration changes, access policy updates, and peer
-          registration and login events across your network.{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/audit-events-logging"}
-            target={"_blank"}
-          >
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+          Review administrative changes, access-policy updates, device
+          enrollment, authentication-related events, and other network-control
+          activity available from the management service.
         </Paragraph>
       </div>
       <RestrictedAccess page={"Activity"} hasAccess={permission.events.read}>
