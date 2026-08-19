@@ -11,7 +11,14 @@ hubspot='src/cloud/analytics/Hubspot.tsx'
 shell='src/layouts/AppLayout.tsx'
 
 # The GoreeCloud dashboard must not directly load third-party behavioral analytics.
-if grep -RInE --exclude-dir=node_modules --exclude-dir=.next -- 'from ["'"']react-(ga4|hotjar)["'"']|require\(["'"']react-(ga4|hotjar)["'"']\)' src; then
+# Keep the shell quoting simple: this expression only needs to catch ordinary
+# JavaScript/TypeScript import and require forms for the retired packages.
+if grep -RInE \
+  --exclude-dir=node_modules \
+  --exclude-dir=.next \
+  --exclude-dir=out \
+  -- 'from ["'\'' ]*react-(ga4|hotjar)["'\'']|require\(["'\'']react-(ga4|hotjar)["'\'']\)' \
+  src; then
   fail 'direct GA4/Hotjar runtime import detected'
 fi
 
