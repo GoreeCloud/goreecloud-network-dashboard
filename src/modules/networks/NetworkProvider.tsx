@@ -31,25 +31,15 @@ const NetworksContext = React.createContext(
     openAddRoutingPeerModal: (network: Network, router?: NetworkRouter) => void;
     openEditNetworkModal: (network: Network) => void;
     openCreateNetworkModal: () => void;
-    openResourceModal: (
-      network: Network,
-      resource?: NetworkResource,
-      initialTab?: string,
-    ) => void;
-    openResourceGroupModal: (
-      network: Network,
-      resource?: NetworkResource,
-    ) => void;
+    openResourceModal: (network: Network, resource?: NetworkResource, initialTab?: string) => void;
+    openResourceGroupModal: (network: Network, resource?: NetworkResource) => void;
     openPolicyModal: (network?: Network, resource?: NetworkResource) => void;
     openEditPolicyModal: (policy: Policy) => void;
     deleteNetwork: (network: Network) => Promise<void>;
     deleteResource: (network: Network, resource: NetworkResource) => void;
     deleteRouter: (network: Network, router: NetworkRouter) => void;
     network?: Network;
-    assignedPolicies: (
-      resource?: NetworkResource,
-      groups?: Group[],
-    ) => {
+    assignedPolicies: (resource?: NetworkResource, groups?: Group[]) => {
       policies: Policy[];
       enabledPolicies: Policy[];
       isLoading: boolean;
@@ -58,36 +48,20 @@ const NetworksContext = React.createContext(
     resourceExists: (name: string, excludeId?: string) => boolean;
     resources?: NetworkResource[];
     getPolicyDestinationResources: (policy: Policy) => NetworkResource[];
-    confirmMultiResourceAction: (
-      policy: Policy,
-      action: "edit" | "delete",
-      additionalResource?: NetworkResource,
-    ) => Promise<boolean>;
+    confirmMultiResourceAction: (policy: Policy, action: "edit" | "delete", additionalResource?: NetworkResource) => Promise<boolean>;
     policies?: Policy[];
   },
 );
 
-export const NetworkProvider = ({
-  children,
-  network,
-  onResourceDelete,
-  onResourceUpdate,
-}: Props) => {
+export const NetworkProvider = ({ children, network, onResourceDelete, onResourceUpdate }: Props) => {
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
-  const {
-    policies,
-    resources,
-    assignedPolicies,
-    resourceExists,
-    getPolicyDestinationResources,
-  } = useNetworkAccessControl();
+  const { policies, resources, assignedPolicies, resourceExists, getPolicyDestinationResources } = useNetworkAccessControl();
 
   const [currentNetwork, setCurrentNetwork] = useState<Network>();
   const [currentResource, setCurrentResource] = useState<NetworkResource>();
   const [currentRouter, setCurrentRouter] = useState<NetworkRouter>();
-
   const [policyDefaultSettings, setPolicyDefaultSettings] = useState<{
     name?: string;
     description?: string;
@@ -95,81 +69,52 @@ export const NetworkProvider = ({
     destinationResource?: PolicyRuleResource;
   }>();
   const [currentPolicy, setCurrentPolicy] = useState<Policy>();
-
   const [routingPeerModal, setRoutingPeerModal] = useState(false);
   const [networkModal, setNetworkModal] = useState(false);
   const [resourceModal, setResourceModal] = useState(false);
   const [resourceGroupModal, setResourceGroupModal] = useState(false);
   const [policyModal, setPolicyModal] = useState(false);
+  const [resourceModalInitialTab, setResourceModalInitialTab] = useState<string | undefined>();
 
-  const openAddRoutingPeerModal = (
-    network: Network,
-    router?: NetworkRouter,
-  ) => {
-    setCurrentNetwork(network);
+  const openAddRoutingPeerModal = (targetNetwork: Network, router?: NetworkRouter) => {
+    setCurrentNetwork(targetNetwork);
     router && setCurrentRouter(router);
     setRoutingPeerModal(true);
   };
-
-  const openEditNetworkModal = (network: Network) => {
-    setCurrentNetwork(network);
+  const openEditNetworkModal = (targetNetwork: Network) => {
+    setCurrentNetwork(targetNetwork);
     setNetworkModal(true);
   };
-
   const openCreateNetworkModal = () => {
     setCurrentNetwork(undefined);
     setNetworkModal(true);
   };
-
-  const [resourceModalInitialTab, setResourceModalInitialTab] = useState<
-    string | undefined
-  >();
-
-  const openResourceModal = (
-    network: Network,
-    resource?: NetworkResource,
-    initialTab?: string,
-  ) => {
-    setCurrentNetwork(network);
+  const openResourceModal = (targetNetwork: Network, resource?: NetworkResource, initialTab?: string) => {
+    setCurrentNetwork(targetNetwork);
     resource && setCurrentResource(resource);
     setResourceModalInitialTab(initialTab);
     setResourceModal(true);
   };
-
-  const openResourceGroupModal = (
-    network: Network,
-    resource?: NetworkResource,
-  ) => {
-    setCurrentNetwork(network);
+  const openResourceGroupModal = (targetNetwork: Network, resource?: NetworkResource) => {
+    setCurrentNetwork(targetNetwork);
     resource && setCurrentResource(resource);
     setResourceGroupModal(true);
   };
 
-  const openPolicyModal = (network?: Network, resource?: NetworkResource) => {
+  const openPolicyModal = (targetNetwork?: Network, resource?: NetworkResource) => {
     const hasResourceGroups = (resource?.groups?.length || 0) > 0;
     setPolicyDefaultSettings({
       destinationGroups: hasResourceGroups ? resource?.groups : undefined,
       destinationResource: hasResourceGroups
         ? undefined
         : resource
-        ? ({
-            id: resource.id,
-            type: resource.type,
-          } as PolicyRuleResource)
-        : undefined,
-      name:
-        network && !resource
-          ? `${network?.name} Policy`
-          : resource
-          ? `${resource?.name} Policy`
-          : "",
-      description:
-        network && !resource
-          ? network?.description
-          : network
-          ? `${network.name} ${
-              network.description ? ", " + network.description : ""
-            }`
+          ? ({ id: resource.id, type: resource.type } as PolicyRuleResource)
+          : undefined,
+      name: targetNetwork && !resource ? `${targetNetwork.name} Policy` : resource ? `${resource.name} Policy` : "",
+      description: targetNetwork && !resource
+        ? targetNetwork.description
+        : targetNetwork
+          ? `${targetNetwork.name}${targetNetwork.description ? ", " + targetNetwork.description : ""}`
           : undefined,
     });
     setPolicyModal(true);
@@ -180,38 +125,21 @@ export const NetworkProvider = ({
     setPolicyModal(true);
   };
 
-  const confirmMultiResourceAction = async (
-    policy: Policy,
-    action: "edit" | "delete",
-    additionalResource?: NetworkResource,
-  ) => {
+  const confirmMultiResourceAction = async (policy: Policy, action: "edit" | "delete", additionalResource?: NetworkResource) => {
     const fetchedResources = getPolicyDestinationResources(policy);
-    const affectedResources =
-      additionalResource &&
-      !fetchedResources.some((r) => r.id === additionalResource.id)
-        ? [...fetchedResources, additionalResource]
-        : fetchedResources;
+    const affectedResources = additionalResource && !fetchedResources.some((r) => r.id === additionalResource.id)
+      ? [...fetchedResources, additionalResource]
+      : fetchedResources;
     const isMulti = affectedResources.length > 1;
     if (!isMulti && action === "edit") return true;
     return confirm({
-      title: isMulti ? (
-        <>This policy is used by multiple resources</>
-      ) : (
-        <>
-          {action === "edit" ? "Edit" : "Delete"} policy &apos;{policy.name}
-          &apos;?
-        </>
-      ),
+      title: isMulti ? <>This policy is used by multiple resources</> : <>{action === "edit" ? "Edit" : "Delete"} policy &apos;{policy.name}&apos;?</>,
       description: isMulti
-        ? `This policy uses one or many resource group(s) as destinations. ${
-            action === "edit" ? "Updating" : "Deleting"
-          } this policy will also affect following resources:`
+        ? `This policy uses one or more resource groups as destinations. ${action === "edit" ? "Updating" : "Deleting"} it will also affect the following resources:`
         : action === "delete"
-        ? "Are you sure you want to delete this policy? This action cannot be undone."
-        : undefined,
-      children: isMulti ? (
-        <AffectedResourceList resources={affectedResources} />
-      ) : undefined,
+          ? "Deleting this policy removes its network-access rule. Review affected sources and destinations before continuing; this action cannot be undone."
+          : undefined,
+      children: isMulti ? <AffectedResourceList resources={affectedResources} /> : undefined,
       confirmText: action === "edit" ? "Edit Policy" : "Delete Policy",
       cancelText: "Cancel",
       hideIcon: isMulti,
@@ -220,144 +148,115 @@ export const NetworkProvider = ({
     });
   };
 
-  const deleteNetwork = async (network: Network) => {
+  const deleteNetwork = async (targetNetwork: Network) => {
     const choice = await confirm({
-      title: `Delete network '${network.name}'?`,
-      description:
-        "Are you sure you want to delete this network? Every resource and routing peers will be removed from this network. This action cannot be undone.",
-      confirmText: "Delete",
+      title: `Delete network '${targetNetwork.name}'?`,
+      description: "This permanently removes the network definition, its resources, and its routing-peer assignments from GoreeCloud Network. Devices may immediately lose private reachability to those destinations. Application data on destination systems is not deleted, but this action cannot be undone from the dashboard.",
+      confirmText: "Delete Network",
       cancelText: "Cancel",
       type: "danger",
     });
-
     if (!choice) return;
-
-    const promise = deleteCall({}, `/${network.id}`).then(() => {
+    const promise = deleteCall({}, `/${targetNetwork.id}`).then(() => {
       mutate("/networks");
       mutate("/groups");
     });
-
-    notify({
-      title: network.name,
-      description: "Network deleted successfully.",
-      loadingMessage: "Deleting network...",
-      promise,
-    });
-
+    notify({ title: targetNetwork.name, description: "Network deleted.", loadingMessage: "Deleting network...", promise });
     return promise;
   };
 
-  const deleteResource = async (
-    network: Network,
-    resource: NetworkResource,
-  ) => {
+  const deleteResource = async (targetNetwork: Network, resource: NetworkResource) => {
     const choice = await confirm({
       title: `Delete resource '${resource.name}'?`,
-      description:
-        "Are you sure you want to delete this resource? This action cannot be undone.",
-      confirmText: "Delete",
+      description: "This removes the private destination from GoreeCloud Network and can immediately break access policies or workflows that depend on it. The destination service or host itself is not deleted. This action cannot be undone from the dashboard.",
+      confirmText: "Delete Resource",
       cancelText: "Cancel",
       type: "danger",
     });
-
     if (!choice) return;
-
     notify({
       title: resource.name,
-      description: "Resource deleted successfully.",
+      description: "Resource deleted.",
       loadingMessage: "Deleting resource...",
-      promise: deleteCall({}, `/${network.id}/resources/${resource.id}`).then(
-        () => {
-          onResourceDelete?.();
-          mutate(`/networks/${network.id}/resources`);
-          mutate(`/networks/${network.id}`);
-          mutate("/groups");
-        },
-      ),
+      promise: deleteCall({}, `/${targetNetwork.id}/resources/${resource.id}`).then(() => {
+        onResourceDelete?.();
+        mutate(`/networks/${targetNetwork.id}/resources`);
+        mutate(`/networks/${targetNetwork.id}`);
+        mutate("/groups");
+      }),
     });
   };
 
-  const deleteRouter = async (network: Network, router: NetworkRouter) => {
+  const deleteRouter = async (targetNetwork: Network, router: NetworkRouter) => {
     const choice = await confirm({
-      title: `Remove this router?`,
-      description: "Are you sure you want to remove this router?",
-      confirmText: "Remove",
+      title: "Remove routing peer?",
+      description: "Removing this routing-peer assignment can make dependent private resources unreachable unless another enabled routing peer provides a valid path. The enrolled device itself is not deleted.",
+      confirmText: "Remove Routing Peer",
       cancelText: "Cancel",
       type: "danger",
     });
-
     if (!choice) return;
-
     notify({
-      title: "Router of " + network.name,
-      description: "Router deleted successfully.",
-      loadingMessage: "Deleting router...",
-      promise: deleteCall({}, `/${network.id}/routers/${router.id}`).then(
-        () => {
-          mutate(`/networks/${network.id}/routers`);
-        },
-      ),
+      title: `Routing peer for ${targetNetwork.name}`,
+      description: "Routing-peer assignment removed.",
+      loadingMessage: "Removing routing peer...",
+      promise: deleteCall({}, `/${targetNetwork.id}/routers/${router.id}`).then(() => {
+        mutate(`/networks/${targetNetwork.id}/routers`);
+      }),
     });
   };
 
-  const askForRoutingPeer = async (network: Network) => {
+  const askForRoutingPeer = async (targetNetwork: Network) => {
     const choice = await confirm({
-      title: `Add Routing Peer to '${network.name}'?`,
-      description:
-        "Without a routing peer, the resources inside this network will not be accessible by any peers.",
+      title: `Add routing peer to '${targetNetwork.name}'?`,
+      description: "Resources in this network need at least one valid routing path before approved devices can reach them. Access Policies and destination-service authorization still apply independently.",
       confirmText: "Add Routing Peer",
       cancelText: "Later",
       type: "default",
     });
-    if (!choice) return;
-    openAddRoutingPeerModal(network);
+    if (choice) openAddRoutingPeerModal(targetNetwork);
   };
 
-  const askForResource = async (network: Network) => {
+  const askForResource = async (targetNetwork: Network) => {
     const choice = await confirm({
-      title: `Add Resource to '${network.name}'?`,
-      description:
-        "Peers will be able to access your network resources once you add them.",
+      title: `Add resource to '${targetNetwork.name}'?`,
+      description: "Add a private destination, then review Access Policies and routing before expecting approved devices to reach it.",
       confirmText: "Add Resource",
       cancelText: "Later",
       type: "default",
     });
-    if (!choice) return;
-    openResourceModal(network);
+    if (choice) openResourceModal(targetNetwork);
   };
 
   return (
-    <NetworksContext.Provider
-      value={{
-        openAddRoutingPeerModal,
-        openEditNetworkModal,
-        openCreateNetworkModal,
-        openResourceModal,
-        openResourceGroupModal,
-        openPolicyModal,
-        openEditPolicyModal,
-        deleteNetwork,
-        deleteResource,
-        deleteRouter,
-        network,
-        assignedPolicies,
-        resourceExists,
-        resources,
-        getPolicyDestinationResources,
-        confirmMultiResourceAction,
-        policies,
-      }}
-    >
+    <NetworksContext.Provider value={{
+      openAddRoutingPeerModal,
+      openEditNetworkModal,
+      openCreateNetworkModal,
+      openResourceModal,
+      openResourceGroupModal,
+      openPolicyModal,
+      openEditPolicyModal,
+      deleteNetwork,
+      deleteResource,
+      deleteRouter,
+      network,
+      assignedPolicies,
+      resourceExists,
+      resources,
+      getPolicyDestinationResources,
+      confirmMultiResourceAction,
+      policies,
+    }}>
       <PoliciesProvider>
         {children}
-
         <NetworkModal
           open={networkModal}
           setOpen={setNetworkModal}
           network={currentNetwork}
-          onCreated={async (network) => {
+          onCreated={async (createdNetwork) => {
             mutate("/networks");
-            await askForResource(network);
+            await askForResource(createdNetwork);
           }}
           onUpdated={(n) => {
             mutate("/networks");
@@ -375,13 +274,11 @@ export const NetworkProvider = ({
           <AccessControlModalContent
             key={policyModal ? "1" : "0"}
             initialDestinationGroups={policyDefaultSettings?.destinationGroups}
-            initialDestinationResource={
-              policyDefaultSettings?.destinationResource
-            }
+            initialDestinationResource={policyDefaultSettings?.destinationResource}
             initialName={policyDefaultSettings?.name}
             initialDescription={policyDefaultSettings?.description}
             policy={currentPolicy}
-            onSuccess={async (p) => {
+            onSuccess={async () => {
               setPolicyModal(false);
               setPolicyDefaultSettings(undefined);
               setCurrentPolicy(undefined);
@@ -405,7 +302,7 @@ export const NetworkProvider = ({
               onCreated={async () => {
                 setRoutingPeerModal(false);
                 setCurrentRouter(undefined);
-                mutate(`/networks`);
+                mutate("/networks");
                 mutate("/groups");
                 if (network) {
                   mutate(`/networks/${currentNetwork.id}/routers`);
@@ -415,7 +312,7 @@ export const NetworkProvider = ({
               onUpdated={async () => {
                 setRoutingPeerModal(false);
                 setCurrentRouter(undefined);
-                mutate(`/networks`);
+                mutate("/networks");
                 mutate("/groups");
                 if (network) {
                   mutate(`/networks/${network.id}`);
@@ -427,7 +324,6 @@ export const NetworkProvider = ({
                 setRoutingPeerModal(state);
               }}
             />
-
             <ResourceGroupModal
               network={currentNetwork}
               resource={currentResource}
@@ -448,12 +344,11 @@ export const NetworkProvider = ({
                 }
               }}
             />
-
             <NetworkResourceModal
               network={currentNetwork}
               resource={currentResource}
               initialTab={resourceModalInitialTab}
-              onCreated={async (r) => {
+              onCreated={async () => {
                 setResourceModal(false);
                 setCurrentResource(undefined);
                 mutate("/networks");
@@ -463,8 +358,7 @@ export const NetworkProvider = ({
                   mutate(`/networks/${network.id}/resources`);
                   mutate(`/networks/${network.id}`);
                 } else {
-                  currentNetwork?.routing_peers_count === 0 &&
-                    (await askForRoutingPeer(currentNetwork));
+                  currentNetwork.routing_peers_count === 0 && (await askForRoutingPeer(currentNetwork));
                 }
               }}
               onUpdated={() => {
@@ -493,44 +387,18 @@ export const NetworkProvider = ({
   );
 };
 
-export const useNetworksContext = () => {
-  const context = React.useContext(NetworksContext);
-  if (context === undefined) {
-    throw new Error("useNetworksContext must be used within a NetworkProvider");
-  }
-  return context;
-};
+export const useNetworksContext = () => React.useContext(NetworksContext);
 
-function AffectedResourceList({ resources }: { resources: NetworkResource[] }) {
-  const maxVisible = 6;
-  const visible = resources.slice(0, maxVisible);
-  const remaining = resources.length - maxVisible;
-  return (
-    <div
-      className={cn(
-        "rounded-md bg-nb-gray-930 border border-nb-gray-900 text-xs mt-4",
-      )}
-    >
-      {visible.map((r, i) => (
-        <div
-          key={r.id}
-          className={cn(
-            "flex items-center gap-2.5 px-3 py-2.5",
-            i > 0 && "border-t border-nb-gray-900",
-          )}
-        >
-          <ResourceIcon type={r.type || "host"} size={12} />
-          <span className="font-medium text-nb-gray-200">{r.name}</span>
-          <CopyToClipboardText className={"text-nb-gray-300"}>
-            {r.address}
-          </CopyToClipboardText>
+const AffectedResourceList = ({ resources }: { resources: NetworkResource[] }) => (
+  <div className={"flex flex-col gap-2 max-h-64 overflow-auto mt-3"}>
+    {resources.map((resource) => (
+      <div key={resource.id} className={cn("flex items-center gap-3 rounded-md border border-nb-gray-800 px-3 py-2")}>
+        <ResourceIcon resource={resource} />
+        <div className={"flex flex-col min-w-0"}>
+          <span className={"text-sm font-medium text-nb-gray-200 truncate"}>{resource.name}</span>
+          <CopyToClipboardText value={resource.address} className={"text-xs text-nb-gray-400"} />
         </div>
-      ))}
-      {remaining > 0 && (
-        <div className="border-t border-nb-gray-900 px-3 py-2 text-nb-gray-200">
-          + {remaining} more
-        </div>
-      )}
-    </div>
-  );
-}
+      </div>
+    ))}
+  </div>
+);
