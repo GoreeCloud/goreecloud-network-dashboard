@@ -40,17 +40,26 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Log in to the Container registry
+      # Upstream E2E images are expected to be publicly pullable. Preserve
+      # optional authenticated pulls when the inherited secret is configured,
+      # but do not fail before test setup merely because that optional secret is
+      # absent in the GoreeCloud fork.
+      - name: Log in to the Container registry when pull token is configured
+        if: ${{ secrets.CI_DOCKER_PULL_GITHUB_TOKEN != '' }}
         uses: docker/login-action@v4
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.CI_DOCKER_PULL_GITHUB_TOKEN }}
+
+      - name: Record unauthenticated registry mode
+        if: ${{ secrets.CI_DOCKER_PULL_GITHUB_TOKEN == '' }}
+        run: echo 'No custom GHCR pull token is configured; E2E will use public image pulls.' >> "$GITHUB_STEP_SUMMARY"
 
       - run: echo '{}' > .local-config.json
 
