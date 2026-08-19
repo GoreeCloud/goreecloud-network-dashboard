@@ -1,0 +1,38 @@
+name: GoreeCloud dashboard validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "agent/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: goreecloud-dashboard-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Validate GoreeCloud privacy boundaries
+        run: bash scripts/validate-goreecloud-dashboard.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Lint dashboard
+        run: npm run lint
