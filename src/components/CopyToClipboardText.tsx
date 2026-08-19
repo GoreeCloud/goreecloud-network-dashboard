@@ -4,7 +4,8 @@ import React from "react";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 
 type Props = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  value?: string;
   message?: string;
   iconAlignment?: "left" | "right";
   className?: string;
@@ -18,13 +19,15 @@ type Props = {
 
 export default function CopyToClipboardText({
   children,
+  value,
   message,
   iconAlignment = "right",
   className,
   alwaysShowIcon = false,
   textToCopy,
 }: Props) {
-  const [wrapper, copyToClipboard, copied] = useCopyToClipboard(textToCopy);
+  const renderedValue = children ?? value ?? "";
+  const [wrapper, copyToClipboard, copied] = useCopyToClipboard(textToCopy ?? value);
 
   return (
     <div
@@ -37,7 +40,7 @@ export default function CopyToClipboardText({
       ref={wrapper}
     >
       <span className="relative truncate">
-        {children}
+        {renderedValue}
         <span className="absolute bottom-0 left-0 right-0 border-b border-dashed border-transparent group-hover:border-nb-gray-500 pointer-events-none" />
       </span>
 
