@@ -1,13 +1,11 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -26,22 +24,16 @@ export default function Networks() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            label={"Network Routing"}
+            label={"Private Routing"}
             icon={<NetworkRoutesIcon size={13} />}
           />
           <Breadcrumbs.Item href={"/networks"} label={"Networks"} />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Networks</h1>
+        <h1 ref={headingRef}>Networks & Resources</h1>
         <Paragraph>
-          Access internal resources in LANs and VPCs without installing NetBird
-          on every machine.{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/networks"}
-            target={"_blank"}
-          >
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+          Define approved private networks and the resources reachable through
+          routing peers. Network reachability remains separate from application
+          authorization and should be granted only through explicit policy.
         </Paragraph>
       </div>
 
