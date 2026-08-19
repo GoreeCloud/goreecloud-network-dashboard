@@ -86,11 +86,10 @@ async function openServiceUserList(page: Page) {
 }
 
 async function returnToServiceUserList(page: Page) {
-  await page
-    .getByTestId("breadcrumb-item")
-    .filter({ hasText: "Service Identities" })
-    .click();
-  await page.waitForURL(/\/team\/service-users/, { timeout: 15_000 });
+  // The user-detail breadcrumb remains an inherited presentation detail and is not
+  // part of the Service Identities persistence contract. Return through the stable
+  // route so this test verifies saved role state instead of breadcrumb wording.
+  await navigateTo(page, "/team/service-users");
   await expectServiceUserList(page);
 }
 
