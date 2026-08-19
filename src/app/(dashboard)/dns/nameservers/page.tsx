@@ -1,13 +1,11 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -38,26 +36,22 @@ export default function NameServers() {
           />
           <Breadcrumbs.Item
             href={"/dns/nameservers"}
-            label={"Nameservers"}
+            label={"Resolvers"}
             active
             icon={<DNSIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Nameservers</h1>
+        <h1 ref={headingRef}>DNS Resolvers</h1>
         <Paragraph>
-          Add nameservers for domain name resolution in your NetBird network.{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
-            target={"_blank"}
-          >
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+          Assign approved DNS resolvers to GoreeCloud Network peers. This
+          controls DNS delivery through the private network; filtering and
+          recursive-resolution responsibilities remain with the designated
+          GoreeCloud DNS services.
         </Paragraph>
       </div>
 
       <RestrictedAccess
-        page={"Nameservers"}
+        page={"DNS Resolvers"}
         hasAccess={permission.nameservers.read}
       >
         <Suspense fallback={<SkeletonTable />}>
