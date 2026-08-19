@@ -23,6 +23,7 @@ concurrency:
 
 env:
   STAGING_IMAGE: ghcr.io/goreecloud/goreecloud-network-dashboard
+  SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   build-staging-image:
@@ -30,6 +31,20 @@ jobs:
     steps:
       - name: Check out exact source revision
         uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+
+      - name: Verify exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          if [[ "$actual_sha" != "$SOURCE_SHA" ]]; then
+            echo "Expected source revision $SOURCE_SHA but checked out $actual_sha" >&2
+            exit 1
+          fi
+          echo "Verified exact dashboard source revision: $SOURCE_SHA"
 
       - name: Set up Node.js
         uses: actions/setup-node@v5
@@ -76,7 +91,7 @@ jobs:
       - name: Build dashboard
         run: npm run build
         env:
-          NEXT_PUBLIC_DASHBOARD_VERSION: staging-${{ github.sha }}
+          NEXT_PUBLIC_DASHBOARD_VERSION: staging-${{ env.SOURCE_SHA }}
 
       - name: Verify static build output
         shell: bash
@@ -115,9 +130,9 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64
           push: ${{ steps.publication.outputs.publish == 'true' }}
-          tags: ${{ env.STAGING_IMAGE }}:staging-${{ github.sha }}
+          tags: ${{ env.STAGING_IMAGE }}:staging-${{ env.SOURCE_SHA }}
           labels: |
-            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.revision=${{ env.SOURCE_SHA }}
             org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
             goreecloud.environment=staging
 
@@ -126,14 +141,14 @@ jobs:
         run: |
           set -euo pipefail
           cat > goreecloud-dashboard-staging-image.env <<EOF
-          GOREECLOUD_NETWORK_DASHBOARD_IMAGE=${STAGING_IMAGE}:staging-${GITHUB_SHA}
-          GOREECLOUD_NETWORK_DASHBOARD_SOURCE_REVISION=${GITHUB_SHA}
+          GOREECLOUD_NETWORK_DASHBOARD_IMAGE=${STAGING_IMAGE}:staging-${SOURCE_SHA}
+          GOREECLOUD_NETWORK_DASHBOARD_SOURCE_REVISION=${SOURCE_SHA}
           EOF
 
           {
             echo '### GoreeCloud dashboard staging image contract'
             echo
-            echo "Source revision: \`${GITHUB_SHA}\`"
+            echo "Source revision: \`${SOURCE_SHA}\`"
             echo
             echo '```dotenv'
             cat goreecloud-dashboard-staging-image.env
@@ -149,7 +164,7 @@ jobs:
       - name: Upload staging image evidence
         uses: actions/upload-artifact@v4
         with:
-          name: goreecloud-dashboard-staging-image-evidence-${{ github.sha }}
+          name: goreecloud-dashboard-staging-image-evidence-${{ env.SOURCE_SHA }}
           path: |
             goreecloud-dashboard-staging-image.env
             staging-dashboard-output-sha256.txt
