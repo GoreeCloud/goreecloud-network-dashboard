@@ -4,6 +4,7 @@ import { useApiCall } from "@utils/api";
 import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -11,8 +12,10 @@ import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 type Props = {
   router: NetworkRouter;
 };
+
 export const RoutingPeersEnabledCell = ({ router }: Props) => {
   const { permission } = usePermissions();
+  const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
 
@@ -21,9 +24,21 @@ export const RoutingPeersEnabledCell = ({ router }: Props) => {
   ).put;
 
   const toggle = async (enabled: boolean) => {
+    if (!enabled) {
+      const choice = await confirm({
+        title: "Disable this routing peer?",
+        description:
+          "Disabling this routing peer stops it from forwarding traffic for this network. Resources that depend on this path may become unreachable until another enabled routing peer is available.",
+        confirmText: "Disable Routing Peer",
+        cancelText: "Cancel",
+        type: "warning",
+      });
+      if (!choice) return;
+    }
+
     notify({
-      title: "Network Routing Peer",
-      description: `Routing peer is now ${enabled ? "enabled" : "disabled"}`,
+      title: "Routing Peer",
+      description: `Routing peer is now ${enabled ? "enabled" : "disabled"}.`,
       loadingMessage: "Updating routing peer...",
       promise: update({
         ...router,
@@ -43,8 +58,9 @@ export const RoutingPeersEnabledCell = ({ router }: Props) => {
       <ToggleSwitch
         checked={isChecked}
         size={"small"}
-        onClick={() => toggle(!isChecked)}
+        onClick={() => void toggle(!isChecked)}
         disabled={!permission.networks.update}
+        aria-label={isChecked ? "Disable routing peer" : "Enable routing peer"}
       />
     </div>
   );
