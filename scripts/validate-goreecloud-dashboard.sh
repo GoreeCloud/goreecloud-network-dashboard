@@ -10,16 +10,15 @@ analytics='src/contexts/AnalyticsProvider.tsx'
 hubspot='src/cloud/analytics/Hubspot.tsx'
 shell='src/layouts/AppLayout.tsx'
 
-# The GoreeCloud dashboard must not directly load third-party behavioral analytics.
-# Keep the shell quoting simple: this expression only needs to catch ordinary
-# JavaScript/TypeScript import and require forms for the retired packages.
+# The retired GA4 and Hotjar packages may remain in the deterministic package
+# manifest/lockfile temporarily, but active application source must not reference them.
 if grep -RInE \
   --exclude-dir=node_modules \
   --exclude-dir=.next \
   --exclude-dir=out \
-  -- 'from ["'\'' ]*react-(ga4|hotjar)["'\'']|require\(["'\'']react-(ga4|hotjar)["'\'']\)' \
+  -- 'react-(ga4|hotjar)' \
   src; then
-  fail 'direct GA4/Hotjar runtime import detected'
+  fail 'direct GA4/Hotjar runtime reference detected in application source'
 fi
 
 # The retained compatibility providers must remain inert until removed entirely.
