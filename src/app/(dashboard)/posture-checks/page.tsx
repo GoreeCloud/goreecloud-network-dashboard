@@ -1,13 +1,12 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -19,6 +18,7 @@ import PageContainer from "@/layouts/PageContainer";
 const PostureCheckTable = lazy(
   () => import("@/modules/posture-checks/table/PostureCheckTable"),
 );
+
 export default function PostureChecksPage() {
   const { permission } = usePermissions();
   const { data: postureChecks, isLoading } =
@@ -34,7 +34,7 @@ export default function PostureChecksPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={"Access Policies"}
               icon={<AccessControlIcon size={14} />}
             />
             <Breadcrumbs.Item
@@ -46,14 +46,9 @@ export default function PostureChecksPage() {
           </Breadcrumbs>
           <h1 ref={headingRef}>Posture Checks</h1>
           <Paragraph>
-            Use posture checks to further restrict access in your network.{" "}
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/manage-posture-checks"}
-              target={"_blank"}
-            >
-              Learn more
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            Require approved device conditions before an access policy applies. Posture
+            checks strengthen least-privilege network access, but they do not replace device
+            approval, individual identity, application authorization, or host security controls.
           </Paragraph>
         </div>
 
