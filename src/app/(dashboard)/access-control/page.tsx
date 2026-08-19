@@ -1,13 +1,11 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -19,11 +17,10 @@ import PageContainer from "@/layouts/PageContainer";
 const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
+
 export default function AccessControlPage() {
   const { permission } = usePermissions();
-
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
-
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -34,26 +31,20 @@ export default function AccessControlPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={"Access Policies"}
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Access Control Policies</h1>
+          <h1 ref={headingRef}>Access Policies</h1>
           <Paragraph>
-            Policies connect users and agents to your network resources,
-            controlling what each identity can reach.{" "}
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/manage-network-access"}
-              target={"_blank"}
-            >
-              Learn more
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
+            Define explicit least-privilege access between approved identities,
+            device groups, and private network resources. GoreeCloud Network
+            remains deny-by-default unless access is intentionally granted.
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Access Control"}
+          page={"Access Policies"}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>
