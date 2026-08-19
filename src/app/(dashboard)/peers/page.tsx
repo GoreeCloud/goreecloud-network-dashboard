@@ -1,16 +1,13 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { usePortalElement } from "@hooks/usePortalElement";
-import { ExternalLinkIcon } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
-import useDistributorRedirect from "@/cloud/distributor/useDistributorRedirect";
 import { useBypassedPeers } from "@/cloud/edr/useBypass";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -23,16 +20,12 @@ const PeersTable = lazy(() => import("@/modules/peers/PeersTable"));
 
 export default function PeersPage() {
   const { isRestricted } = usePermissions();
-  const { isLoading: isDistributorRedirecting } = useDistributorRedirect();
-  if (isDistributorRedirecting) return <FullScreenLoading />;
 
   return (
     <PageContainer>
       {isRestricted ? (
         <PeersBlockedView />
       ) : (
-        // Suspense boundary required because PeersView reads useSearchParams,
-        // which the static export build otherwise rejects.
         <Suspense fallback={<FullScreenLoading />}>
           <PeersProvider>
             <PeersView />
@@ -48,9 +41,6 @@ function PeersView() {
   const router = useRouter();
   const pathname = usePathname();
 
-  // The selected subset is URL-backed (?kind=), so it survives remounts (e.g.
-  // SWR revalidate-on-focus unmounting the page) and is shareable. No param =
-  // unselected = all peers.
   const kindParam = searchParams?.get("kind");
   const kind: PeersTableKind | undefined =
     kindParam === "servers"
@@ -73,10 +63,6 @@ function PeersView() {
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
-  // The kind filter classifies peers by whether their owner is a real user vs
-  // a service/no-user, so we must wait until both peers and users have loaded
-  // before joining them — otherwise peers temporarily render with
-  // peer.user === undefined and get misclassified.
   const isLoading = isPeersLoading || isUsersLoading;
   const peersWithUser = useMemo(() => {
     if (!peers || !users) return undefined;
@@ -93,21 +79,15 @@ function PeersView() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/peers"}
-            label={"Peers"}
+            label={"Devices"}
             icon={<PeerIcon size={13} />}
             active
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Peers</h1>
+        <h1 ref={headingRef}>Devices</h1>
         <Paragraph>
-            User devices and headless machines, such as servers and autonomous agents, connected to your network.{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/add-machines-to-your-network"}
-            target={"_blank"}
-          >
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+          Enrolled personal devices, family devices, servers, and approved
+          infrastructure endpoints connected to GoreeCloud Network.
         </Paragraph>
       </div>
       <Suspense fallback={<SkeletonTable />}>
@@ -127,24 +107,17 @@ function PeersBlockedView() {
   return (
     <div className={"flex items-center justify-center flex-col"}>
       <div className={"p-default py-6 max-w-3xl text-center"}>
-        <h1>Add new device to your network</h1>
-        <Paragraph className={"inline"}>
-          To get started, install NetBird and log in using your email account.
-          After that you should be connected. If you have further questions
-          check out our{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/getting-started#installation"}
-            target={"_blank"}
-          >
-            Installation Guide
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+        <h1>Enroll a device in GoreeCloud Network</h1>
+        <Paragraph>
+          Use an approved GoreeCloud Network client or enrollment method for
+          this account. Device enrollment remains subject to GoreeCloud access
+          policy and administrative approval.
         </Paragraph>
       </div>
       <div className={"px-3 pt-1 pb-8 max-w-3xl w-full"}>
         <div
           className={
-            "rounded-md border border-nb-gray-900/70 grid w-full bg-nb-gray-930/40 stepper-bg-variant"
+            "rounded-xl border border-gray-200/80 dark:border-zinc-700/60 grid w-full bg-white/70 dark:bg-zinc-900/50 backdrop-blur-xl shadow-sm"
           }
         >
           <SetupModalContent header={false} footer={false} isUserDevice />
