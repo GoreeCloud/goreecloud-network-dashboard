@@ -40,6 +40,9 @@ jobs:
       - name: Create local build config
         run: echo '{}' > .local-config.json
 
+      # The inherited dashboard currently requires pinned IronRDP web assets at
+      # build time. Validation downloads the exact inherited v0.0.2 release with
+      # read-only repository permissions; it does not publish or upload assets.
       - name: Download pinned IronRDP TypeScript assets
         uses: robinraju/release-downloader@v1.7
         with:
