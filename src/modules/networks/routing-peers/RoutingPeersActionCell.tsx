@@ -17,6 +17,7 @@ import {
 import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -24,8 +25,10 @@ import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 type Props = {
   router: NetworkRouter;
 };
+
 export const RoutingPeersActionCell = ({ router }: Props) => {
   const { permission } = usePermissions();
+  const { confirm } = useDialog();
   const { deleteRouter, network, openAddRoutingPeerModal } =
     useNetworksContext();
   const { mutate } = useSWRConfig();
@@ -37,9 +40,22 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
 
   const toggleEnabled = async () => {
     const nextEnabled = !router.enabled;
+
+    if (!nextEnabled) {
+      const choice = await confirm({
+        title: "Disable this routing peer?",
+        description:
+          "Disabling this routing peer stops it from forwarding traffic for this network. Resources that depend on this path may become unreachable until another enabled routing peer is available.",
+        confirmText: "Disable Routing Peer",
+        cancelText: "Cancel",
+        type: "warning",
+      });
+      if (!choice) return;
+    }
+
     notify({
-      title: "Network Routing Peer",
-      description: `Routing peer is now ${nextEnabled ? "enabled" : "disabled"}`,
+      title: "Routing Peer",
+      description: `Routing peer is now ${nextEnabled ? "enabled" : "disabled"}.`,
       loadingMessage: "Updating routing peer...",
       duration: 1200,
       promise: update({
@@ -83,19 +99,19 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              Edit Routing Peer
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
               setOpen(false);
-              toggleEnabled();
+              void toggleEnabled();
             }}
             disabled={!permission.networks.update}
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {router.enabled ? "Disable" : "Enable"}
+              {router.enabled ? "Disable Routing Peer" : "Enable Routing Peer"}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -109,7 +125,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Remove
+              Remove Routing Peer
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

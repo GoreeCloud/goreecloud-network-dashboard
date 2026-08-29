@@ -18,6 +18,7 @@ type Props = {
   routingPeerGroupId?: string;
   "data-testid"?: string;
 };
+
 export const RoutingPeerMasqueradeSwitch = ({
   disabled = false,
   value,
@@ -36,11 +37,11 @@ export const RoutingPeerMasqueradeSwitch = ({
           label={
             <>
               <VenetianMask size={15} />
-              Masquerade
+              Source Address Masquerade
             </>
           }
           helpText={
-            "Allow access to your private networks without configuring routes on your local routers or other devices."
+            "Translate traffic behind the routing peer so the destination network does not need a return route to GoreeCloud Network addresses. Disable only when the destination network has explicit return routing and preserving original source addresses is required."
           }
         />
         {routingPeerGroupId && !value && (
@@ -66,7 +67,7 @@ export const RoutingPeerMasqueradeTooltip = ({
     <FullTooltip
       content={
         <div className={"text-xs"}>
-          Masquerade needs to be enabled for non-Linux routing peers.
+          Source-address masquerade is required for non-Linux routing peers.
         </div>
       }
       delayDuration={250}
@@ -113,9 +114,9 @@ const RoutingPeerGroupNonLinuxWarning = ({
         }
       >
         Group <span className={"text-netbird font-normal"}>{group?.name}</span>{" "}
-        contains at least one non-Linux peer.
-        <br /> Disabled Masquerade will have no effect on non-Linux routing
-        peers.
+        contains at least one non-Linux routing peer.
+        <br /> GoreeCloud Network requires source-address masquerade for those
+        devices, so a disabled setting cannot take effect on them.
       </Callout>
     )
   );

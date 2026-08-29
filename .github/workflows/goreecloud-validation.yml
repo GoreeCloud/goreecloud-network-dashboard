@@ -1,0 +1,122 @@
+name: GoreeCloud dashboard validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - "agent/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: goreecloud-dashboard-validation-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  SOURCE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact source revision
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+
+      - name: Verify exact source revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          actual_sha="$(git rev-parse HEAD)"
+          if [[ "$actual_sha" != "$SOURCE_SHA" ]]; then
+            echo "Expected source revision $SOURCE_SHA but checked out $actual_sha" >&2
+            exit 1
+          fi
+          echo "Verified exact dashboard source revision: $SOURCE_SHA"
+
+      - name: Validate GoreeCloud privacy boundaries
+        run: bash scripts/validate-goreecloud-dashboard.sh
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      # The inherited dashboard has a large existing React/React-Compiler lint
+      # debt baseline. Preserve that evidence without pretending the whole tree
+      # is lint-clean or blocking production build evidence on unrelated debt.
+      - name: Record inherited whole-tree ESLint baseline
+        id: eslint_baseline
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -o pipefail
+          npm run lint 2>&1 | tee goreecloud-eslint-baseline.txt
+
+      - name: Summarize ESLint baseline
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo '### Whole-tree ESLint diagnostic baseline'
+            echo
+            echo "Outcome: ${{ steps.eslint_baseline.outcome }}"
+            echo
+            echo 'This diagnostic records inherited whole-repository lint debt. It is not represented as a lint-clean acceptance gate; privacy validation and the production build remain blocking.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload ESLint baseline evidence
+        if: always() && hashFiles('goreecloud-eslint-baseline.txt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: goreecloud-dashboard-eslint-baseline-${{ env.SOURCE_SHA }}
+          path: goreecloud-eslint-baseline.txt
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create local build config
+        run: echo '{}' > .local-config.json
+
+      # The inherited dashboard currently requires pinned IronRDP web assets at
+      # build time. Validation downloads the exact inherited v0.0.2 release with
+      # read-only repository permissions; it does not publish or upload assets.
+      - name: Download pinned IronRDP TypeScript assets
+        uses: robinraju/release-downloader@v1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: netbirdio/IronRDP
+          tag: v0.0.2
+          fileName: "*.ts"
+          out-file-path: public/ironrdp-pkg
+
+      - name: Download pinned IronRDP JavaScript assets
+        uses: robinraju/release-downloader@v1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: netbirdio/IronRDP
+          tag: v0.0.2
+          fileName: "*.js"
+          out-file-path: public/ironrdp-pkg
+
+      - name: Download pinned IronRDP WebAssembly asset
+        uses: robinraju/release-downloader@v1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: netbirdio/IronRDP
+          tag: v0.0.2
+          fileName: ironrdp_web_bg.wasm
+          out-file-path: public/ironrdp-pkg
+
+      - name: Build production dashboard
+        run: npm run build
+        env:
+          NEXT_PUBLIC_DASHBOARD_VERSION: validation-${{ env.SOURCE_SHA }}

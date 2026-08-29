@@ -4,7 +4,6 @@ import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import Card from "@components/Card";
 import HelpText from "@components/HelpText";
-import InlineLink from "@components/InlineLink";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
@@ -12,7 +11,6 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
@@ -53,14 +51,10 @@ export default function NameServerSettings() {
         </Breadcrumbs>
         <h1>DNS Settings</h1>
         <Paragraph>
-          {"Manage your account's DNS settings."}{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
-            target={"_blank"}
-          >
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+          Control which device groups receive DNS configuration from GoreeCloud Network.
+          Resolver filtering, private rewrites, recursion, caching, and DNSSEC remain the
+          responsibility of the approved GoreeCloud DNS services rather than this network
+          delivery layer.
         </Paragraph>
         <RestrictedAccess page={"DNS Settings"} hasAccess={permission.dns.read}>
           {!isLoading && initialDNSGroups !== undefined ? (
@@ -102,7 +96,7 @@ const SettingDisabledManagementGroups = ({
     const savedGroups = await saveGroups();
     notify({
       title: "DNS Settings",
-      description: "Settings saved successfully.",
+      description: "DNS delivery settings saved successfully.",
       promise: settingRequest
         .put({
           disabled_management_groups: savedGroups.map((g) => g.id),
@@ -111,16 +105,17 @@ const SettingDisabledManagementGroups = ({
           mutate("/dns/settings");
           updateChangesRef([selectedGroups]);
         }),
-      loadingMessage: "Saving the settings...",
+      loadingMessage: "Saving DNS delivery settings...",
     });
   };
 
   return (
     <Card className={"mt-8 max-w-xl"}>
       <div className={"px-8 py-8"}>
-        <Label>Disable DNS management for these groups</Label>
+        <Label>Groups excluded from network-managed DNS</Label>
         <HelpText>
-          Peers in these groups will require manual domain name resolution
+          Devices in these groups will not receive DNS configuration from GoreeCloud
+          Network and must use another approved resolution path.
         </HelpText>
         <PeerGroupSelector
           data-testid={"dns-groups-selector"}

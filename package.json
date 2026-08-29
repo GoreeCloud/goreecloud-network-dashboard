@@ -8,17 +8,17 @@
   "scripts": {
     "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public",
     "copytrusted": "copyfiles -f ./public/local/OidcTrustedDomains.js ./public",
-    "dev": "next dev -p 3000",
-    "build": "next build",
+    "dev": "cross-env NEXT_TELEMETRY_DISABLED=1 next dev -p 3000",
+    "build": "cross-env NEXT_TELEMETRY_DISABLED=1 next build",
     "postbuild": "node postbuild.js",
-    "start": "next start",
+    "start": "cross-env NEXT_TELEMETRY_DISABLED=1 next start",
     "lint": "eslint .",
     "test:setup": "cd ./e2e/environment && sh create-test-env.sh",
     "test:clean": "cd ./e2e/environment && sh clean-test-env.sh",
-    "test:dev": "cross-env APP_ENV=test next dev -p 1337",
+    "test:dev": "cross-env NEXT_TELEMETRY_DISABLED=1 APP_ENV=test next dev -p 1337",
     "test": "npx playwright test --config=e2e/playwright.config.ts",
     "test:ui": "npx playwright test --config=e2e/playwright.config.ts --ui",
-    "test:ci": "cross-env APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts"
+    "test:ci": "cross-env NEXT_TELEMETRY_DISABLED=1 APP_ENV=test next build && npx playwright test --config=e2e/playwright.config.ts"
   },
   "dependencies": {
     "@axa-fr/react-oidc": "^7.26.3",

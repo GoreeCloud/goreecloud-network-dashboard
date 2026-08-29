@@ -1,21 +1,8 @@
-import loadConfig from "@utils/config";
-import { isProduction } from "@utils/netbird";
-import { usePathname } from "next/navigation";
-import Script from "next/script";
-import React, { useEffect, useState } from "react";
-import ReactGA from "react-ga4";
-import { hotjar } from "react-hotjar";
+import React from "react";
 
 type Props = {
   children: React.ReactNode;
 };
-
-declare global {
-  interface Window {
-    _DATADOG_SYNTHETICS_BROWSER: any;
-    dataLayer: any[];
-  }
-}
 
 export type HubspotFormField = {
   objectTypeId?: string;
@@ -23,6 +10,18 @@ export type HubspotFormField = {
   value: string;
 };
 
+/**
+ * GoreeCloud privacy boundary.
+ *
+ * The upstream dashboard can initialize Google Analytics, Google Tag Manager,
+ * and Hotjar and exposes helpers that send product-usage events. GoreeCloud
+ * does not use third-party behavioral analytics for its private self-hosted
+ * administration interface.
+ *
+ * The context API is intentionally preserved as a no-op compatibility layer
+ * so inherited UI components continue to compile while GoreeCloud gradually
+ * removes analytics-specific call sites during the fork-to-native transition.
+ */
 const AnalyticsContext = React.createContext(
   {} as {
     initialized: boolean;
@@ -37,118 +36,32 @@ const AnalyticsContext = React.createContext(
     trackGTMCustomEvent: (name: string) => void;
   },
 );
-const config = loadConfig();
+
+const noop = () => undefined;
 
 export default function AnalyticsProvider({ children }: Readonly<Props>) {
-  const [initialized, setInitialized] = useState(false);
-  const path = usePathname();
-
-  useEffect(() => {
-    if (initialized || !isProduction()) return;
-    const gaid = config.googleAnalyticsID;
-    const hjid = config.hotjarTrackID;
-    if (gaid) {
-      ReactGA.initialize(gaid, {
-        gaOptions: {
-          anonymize_ip: true,
-          send_page_view: false,
-        },
-      });
-    }
-    if (hjid && window._DATADOG_SYNTHETICS_BROWSER === undefined) {
-      hotjar.initialize({ id: hjid, sv: 6 });
-    }
-    setInitialized(true);
-  }, []);
-
-  const trackPageView = () => {
-    if (!initialized) return;
-    if (!path) return;
-    ReactGA.send({ hitType: "pageview", page: path, title: document.title });
-  };
-
-  const trackEvent = (category: string, action: string, label: string) => {
-    if (isProduction() && ReactGA.isInitialized) {
-      ReactGA.event({
-        category: category,
-        action: action,
-        label: label,
-      });
-    }
-  };
-
-  const trackEventV2 = (
-    category: string,
-    name: string,
-    value?: string,
-    userID?: string,
-  ) => {
-    // Track custom event
-    if (isProduction() && ReactGA.isInitialized) {
-      ReactGA.event("nb_event", {
-        category: category,
-        action: name,
-        value: value,
-        userID: userID,
-      });
-    }
-  };
-
-  const trackGTMCustomEvent = (name: string) => {
-    try {
-      window.dataLayer = window.dataLayer || [];
-      window.dataLayer.push({
-        event: name,
-      });
-    } catch (e) {}
-  };
+  const value = React.useMemo(
+    () => ({
+      initialized: false,
+      trackPageView: noop,
+      trackEvent: noop,
+      trackEventV2: noop,
+      trackGTMCustomEvent: noop,
+    }),
+    [],
+  );
 
   return (
-    <AnalyticsContext.Provider
-      value={{
-        initialized,
-        trackPageView,
-        trackEvent,
-        trackEventV2,
-        trackGTMCustomEvent,
-      }}
-    >
-      <GoogleTageManagerBodyScript />
+    <AnalyticsContext.Provider value={value}>
       {children}
     </AnalyticsContext.Provider>
   );
 }
 
-export const GoogleTagManagerHeadScript = () => {
-  if (!config.googleTagManagerID) return null;
-  return (
-    isProduction() && (
-      <Script id="gtm-script" strategy="afterInteractive">
-        {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': 
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-       })(window,document,'script','dataLayer','${config.googleTagManagerID}');`}
-      </Script>
-    )
-  );
-};
-
-const GoogleTageManagerBodyScript = () => {
-  if (!config.googleTagManagerID) return null;
-  return (
-    isProduction() && (
-      <noscript>
-        <iframe
-          title={"Google Tag Manager"}
-          src={`https://www.googletagmanager.com/ns.html?id=${config.googleTagManagerID}`}
-          height="0"
-          width="0"
-          style={{ display: "none", visibility: "hidden" }}
-        />
-      </noscript>
-    )
-  );
-};
+/**
+ * Retained for source compatibility with the inherited application shell.
+ * GoreeCloud intentionally emits no Google Tag Manager script.
+ */
+export const GoogleTagManagerHeadScript = () => null;
 
 export const useAnalytics = () => React.useContext(AnalyticsContext);

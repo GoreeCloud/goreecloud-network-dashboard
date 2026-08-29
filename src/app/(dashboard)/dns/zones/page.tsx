@@ -1,20 +1,18 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
-import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
+import { DNSZone } from "@/interfaces/DNS";
 import PageContainer from "@/layouts/PageContainer";
 import { DNSZonesProvider } from "@/modules/dns/zones/DNSZonesProvider";
-import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
 
 const DNSZonesTable = lazy(
   () => import("@/modules/dns/zones/table/DNSZonesTable"),
@@ -35,18 +33,17 @@ export default function DNSZonePage() {
           <Breadcrumbs.Item label={"DNS"} icon={<DNSIcon size={13} />} />
           <Breadcrumbs.Item
             href={"/dns/zones"}
-            label={"Zones"}
+            label={"DNS Zones"}
             active
             icon={<DNSZoneIcon size={16} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Zones</h1>
+        <h1 ref={headingRef}>DNS Zones</h1>
         <Paragraph>
-          Manage DNS zones to control domain name resolution for your network.{" "}
-          <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-            Learn more
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
+          Manage DNS zones distributed through GoreeCloud Network for approved private
+          network clients. These records support network name resolution; they do not replace
+          GoreeCloud DNS filtering, private rewrite policy, recursive resolution, or public
+          authoritative DNS responsibilities.
         </Paragraph>
       </div>
 
