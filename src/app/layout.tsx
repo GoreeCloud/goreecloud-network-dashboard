@@ -5,6 +5,6 @@ import AppLayout from "@/layouts/AppLayout";
 export const metadata: Metadata = {
   title: `${globalMetaTitle}`,
   description:
-    "NetBird combines a configuration-free peer-to-peer private network and a centralized access control system in a single open-source platform",
+    "Browser-based administration surface for GoreeCloud Network, including peers, access controls, routes, DNS, and network operations.",
 };
 export default AppLayout;

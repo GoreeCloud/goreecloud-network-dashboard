@@ -1,7 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
-import { NetBirdLogo } from "@components/NetBirdLogo";
+import { GoreeCloudNetworkLogo } from "@components/GoreeCloudNetworkLogo";
 import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
@@ -60,8 +60,9 @@ export default function NavbarWithDropdown() {
               className={
                 "cursor-pointer hover:opacity-70 transition-all mr-auto"
               }
+              aria-label="GoreeCloud Network home"
             >
-              <NetBirdLogo />
+              <GoreeCloudNetworkLogo />
             </button>
             <ToggleCollapsableNavigationButton />
           </div>
