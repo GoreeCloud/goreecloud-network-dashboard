@@ -1,0 +1,19 @@
+name: Validate GoreeCloud branding
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  branding:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Validate Network identity provenance and surfaces
+        run: node scripts/validate-branding.mjs
